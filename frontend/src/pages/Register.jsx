@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { registerApi } from '../services/api';
 import { toast } from 'react-toastify';
-import { User, Mail, Phone, Lock, UserPlus, Shield, CheckCircle } from 'lucide-react';
+import { User, Mail, Phone, Lock, UserPlus, Shield, CheckCircle, Eye, EyeOff } from 'lucide-react';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -13,11 +13,13 @@ const Register = () => {
     email: '',
     phone: '',
     password: '',
+    confirmPassword: '',
     role: 'tenant',
   });
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const { name, email, phone, password, role } = formData;
+  const { name, email, phone, password, confirmPassword, role } = formData;
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -25,23 +27,43 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name || !email || !phone || !password) {
+    const cleanName = name.trim();
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPhone = phone.trim();
+
+    if (!cleanName || !cleanEmail || !cleanPhone || !password) {
       toast.error('Please fill in all required fields');
       return;
     }
 
+    if (cleanPhone.length < 10) {
+      toast.error('Please enter a valid 10-digit phone number');
+      return;
+    }
+
     if (password.length < 6) {
-      toast.error('Password must be at least 6 characters');
+      toast.error('Password must be at least 6 characters long');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      toast.error('Passwords do not match');
       return;
     }
 
     setLoading(true);
     try {
-      const res = await registerApi({ name, email, phone, password, role });
-      const { token, user } = res.data;
+      const res = await registerApi({
+        name: cleanName,
+        email: cleanEmail,
+        phone: cleanPhone,
+        password,
+        role,
+      });
 
+      const { token, user } = res.data;
       register(token, user);
-      toast.success(`Account created! Welcome to StayNest, ${user.name}`);
+      toast.success(`Account registered! Welcome to StayNest, ${user.name}`);
 
       if (user.role === 'owner') {
         navigate('/owner-dashboard');
@@ -49,6 +71,8 @@ const Register = () => {
         navigate('/tenant-dashboard');
       }
     } catch (error) {
+      const msg = error.response?.data?.message || 'Registration failed. Please check your details.';
+      toast.error(msg);
       console.error('Registration error:', error);
     } finally {
       setLoading(false);
@@ -159,9 +183,35 @@ const Register = () => {
             <div className="relative">
               <Lock className="w-4 h-4 text-gray-400 absolute left-3.5 top-3" />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 name="password"
                 value={password}
+                onChange={handleChange}
+                placeholder="••••••••"
+                required
+                minLength={6}
+                className="w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 top-3 text-gray-400 hover:text-gray-600"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">
+              Confirm Password
+            </label>
+            <div className="relative">
+              <Lock className="w-4 h-4 text-gray-400 absolute left-3.5 top-3" />
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="confirmPassword"
+                value={confirmPassword}
                 onChange={handleChange}
                 placeholder="••••••••"
                 required

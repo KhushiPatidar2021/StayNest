@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { loginApi } from '../services/api';
 import { toast } from 'react-toastify';
-import { Mail, Lock, LogIn, ArrowRight, UserCheck, Shield } from 'lucide-react';
+import { Mail, Lock, LogIn, ArrowRight, UserCheck, Shield, Eye, EyeOff } from 'lucide-react';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -12,6 +12,7 @@ const Login = () => {
     email: '',
     password: '',
   });
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const { email, password } = formData;
@@ -22,14 +23,16 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email || !password) {
-      toast.error('Please fill in all fields');
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!cleanEmail || !password) {
+      toast.error('Please enter both email and password');
       return;
     }
 
     setLoading(true);
     try {
-      const res = await loginApi({ email, password });
+      const res = await loginApi({ email: cleanEmail, password });
       const { token, user } = res.data;
 
       login(token, user);
@@ -41,6 +44,8 @@ const Login = () => {
         navigate('/tenant-dashboard');
       }
     } catch (error) {
+      const msg = error.response?.data?.message || 'Login failed. Please check your credentials.';
+      toast.error(msg);
       console.error('Login error:', error);
     } finally {
       setLoading(false);
@@ -54,11 +59,13 @@ const Login = () => {
         email: 'owner@staynest.com',
         password: '123456',
       });
+      toast.info('Loaded Owner Demo credentials');
     } else {
       setFormData({
         email: 'tenant@staynest.com',
         password: '123456',
       });
+      toast.info('Loaded Tenant Demo credentials');
     }
   };
 
@@ -126,14 +133,21 @@ const Login = () => {
             <div className="relative">
               <Lock className="w-4 h-4 text-gray-400 absolute left-3.5 top-3" />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 name="password"
                 value={password}
                 onChange={handleChange}
                 placeholder="••••••••"
                 required
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                className="w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 top-3 text-gray-400 hover:text-gray-600"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
           </div>
 
