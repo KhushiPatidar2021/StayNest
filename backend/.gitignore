@@ -1,0 +1,10 @@
+# Dependencies
+node_modules/
+
+# Environment variables (contains JWT secrets & DB connection strings)
+.env
+.env.local
+
+# Logs
+*.log
+npm-debug.log*
