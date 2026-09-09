@@ -20,14 +20,12 @@ const protect = async (req, res, next) => {
         return res.status(401).json({ message: 'User no longer exists' });
       }
 
-      next();
+      return next();
     } catch (error) {
       console.error(error);
       return res.status(401).json({ message: 'Not authorized, token failed' });
     }
-  }
-
-  if (!token) {
+  } else {
     return res.status(401).json({ message: 'Not authorized, no token provided' });
   }
 };

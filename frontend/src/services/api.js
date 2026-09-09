@@ -2,7 +2,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://staynest-backend-5cyx.onrender.com',
+  baseURL: (import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api',
 });
 
 // Request Interceptor: Attach JWT Token if present
@@ -28,9 +28,11 @@ API.interceptors.response.use(
 
     if (error.response) {
       const { status } = error.response;
+      const isAuthMeCall = error.config?.url?.includes('/auth/me');
+
       if (status === 401) {
-        // Unauthorized - Clear invalid token if needed
-        if (localStorage.getItem('token')) {
+        // Only show toast for explicit 401s, not the background auth check on page load
+        if (localStorage.getItem('token') && !isAuthMeCall) {
           toast.error(message || 'Session expired. Please log in again.');
         }
       } else if (status === 403) {

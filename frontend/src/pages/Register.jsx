@@ -18,11 +18,23 @@ const Register = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [emailError, setEmailError] = useState('');
 
   const { name, email, phone, password, confirmPassword, role } = formData;
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+
+    // Real-time email format validation
+    if (name === 'email') {
+      const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+      if (value && !emailRegex.test(value.trim().toLowerCase())) {
+        setEmailError('Please enter a valid email address (e.g. user@example.com)');
+      } else {
+        setEmailError('');
+      }
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -33,6 +45,13 @@ const Register = () => {
 
     if (!cleanName || !cleanEmail || !cleanPhone || !password) {
       toast.error('Please fill in all required fields');
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(cleanEmail)) {
+      toast.error('Please enter a valid email address (e.g. user@example.com)');
       return;
     }
 
@@ -153,9 +172,16 @@ const Register = () => {
                 onChange={handleChange}
                 placeholder="rahul@example.com"
                 required
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                className={`w-full pl-10 pr-4 py-2.5 bg-gray-50 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${
+                  emailError ? 'border-red-400 focus:ring-red-300/20' : 'border-gray-200'
+                }`}
               />
             </div>
+            {emailError && (
+              <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                <span>⚠</span> {emailError}
+              </p>
+            )}
           </div>
 
           <div>

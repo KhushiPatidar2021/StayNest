@@ -7,9 +7,18 @@ const connectDB = async () => {
   } catch (error) {
     console.error(`\n❌ MongoDB Connection Error: ${error.message}`);
     console.error('========================================================================');
-    console.error('👉 MongoDB is not running locally on port 27017!');
-    console.error('👉 Solution: Paste your free MongoDB Atlas cloud connection URI into backend/.env:');
-    console.error('   MONGO_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/staynest');
+
+    if (error.message.includes('bad auth') || error.message.includes('authentication failed')) {
+      console.error('🔐 AUTH FAILURE: Wrong username or password for MongoDB Atlas!');
+      console.error('👉 Fix: Go to MongoDB Atlas → Database Access → Reset password for your DB user');
+      console.error('👉 Then update MONGO_URI in backend/.env with the correct password');
+    } else if (error.message.includes('ENOTFOUND') || error.message.includes('ETIMEDOUT')) {
+      console.error('🌐 NETWORK ERROR: Cannot reach MongoDB Atlas — check your internet connection');
+    } else {
+      console.error('👉 Check your MONGO_URI in backend/.env');
+      console.error('   Format: MONGO_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/dbname');
+    }
+
     console.error('========================================================================\n');
     process.exit(1);
   }

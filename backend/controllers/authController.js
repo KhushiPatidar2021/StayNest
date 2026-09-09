@@ -2,6 +2,18 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+// Email format validator (RFC 5322 simplified)
+const isValidEmail = (email) => {
+  const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+  return emailRegex.test(email);
+};
+
+// Phone number validator (10 digits)
+const isValidPhone = (phone) => {
+  const phoneRegex = /^[6-9]\d{9}$/;
+  return phoneRegex.test(phone);
+};
+
 // Helper to generate JWT Token
 const generateToken = (id) => {
   return jwt.sign(
@@ -22,11 +34,27 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'Please enter all required fields' });
     }
 
-    const cleanEmail = email ? email.trim().toLowerCase() : '';
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPhone = phone.trim();
+
+    // Validate email format
+    if (!isValidEmail(cleanEmail)) {
+      return res.status(400).json({ message: 'Please enter a valid email address (e.g. user@example.com)' });
+    }
+
+    // Validate phone number (10 digits, starting with 6-9)
+    if (!isValidPhone(cleanPhone)) {
+      return res.status(400).json({ message: 'Please enter a valid 10-digit Indian mobile number' });
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+    }
 
     const userExists = await User.findOne({ email: cleanEmail });
     if (userExists) {
-      return res.status(400).json({ message: 'User with this email already exists' });
+      return res.status(400).json({ message: 'An account with this email already exists' });
     }
 
     // Hash password
@@ -38,7 +66,7 @@ const registerUser = async (req, res) => {
       name: name.trim(),
       email: cleanEmail,
       password: hashedPassword,
-      phone: phone.trim(),
+      phone: cleanPhone,
       role: role === 'owner' ? 'owner' : 'tenant',
       profileImage: '',
     });
